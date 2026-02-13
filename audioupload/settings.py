@@ -110,7 +110,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -127,7 +126,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 TIME_ZONE = 'Asia/Kolkata'
 
 CORS_ALLOW_ALL_ORIGINS = True
-DEBUG = True
+
 
 CORS_ALLOW_METHODS = [
     'DELETE',

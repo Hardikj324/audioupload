@@ -20,14 +20,19 @@ class AudioSerializer(serializers.ModelSerializer):
         # Keep original for backwards compatibility
         if not obj.file:
             return None
-        NGROK_URL = "https://alaine-nonpursuant-adhesively.ngrok-free.dev"
-        file_path = obj.file.url
-        return f"{NGROK_URL}{file_path}"
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(obj.file.url)
+
+        return obj.file.url
     
     def get_stream_url(self, obj):
-        # NEW: Streaming endpoint
-        NGROK_URL = "https://alaine-nonpursuant-adhesively.ngrok-free.dev"
-        return f"{NGROK_URL}/api/stream-audio/{obj.id}/"
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(f"/api/stream-audio/{obj.id}/")
+
+        return f"/api/stream-audio/{obj.id}/"
+
 
 
 class NoiseQuestionSerializer(serializers.ModelSerializer):
