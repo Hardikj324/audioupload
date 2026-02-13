@@ -26,6 +26,11 @@ class AudioViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Audio.objects.all()
     serializer_class = AudioSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+    
 class NoiseQuestionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = NoiseQuestion.objects.all()
     serializer_class = NoiseQuestionSerializer
