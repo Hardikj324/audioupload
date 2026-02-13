@@ -22,6 +22,13 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     http_method_names = ['post']
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print("❌ Serializer errors:", serializer.errors)
+            return Response(serializer.errors, status=400)
+        return super().create(request, *args, **kwargs)
+    
 class AudioViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Audio.objects.all()
     serializer_class = AudioSerializer
