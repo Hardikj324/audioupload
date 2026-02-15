@@ -2,24 +2,66 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 import pandas as pd
 from .models import NoiseQuestion, NoiseResponse, AudioEvaluation
-from django.conf import settings
 import os
+import json
+import io
 
-CSV_FILE = os.path.join(settings.BASE_DIR, "csv", "user_survey_analysis.csv")
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
 
 
-@receiver(post_save, sender=AudioEvaluation)
-def update_csv_on_audio(sender, instance, **kwargs):
-    try:
-        export_user_row(instance.user, instance)
-    except Exception as e:
-        # IMPORTANT: never let CSV failure crash API
-        print("CSV export failed:", e)
+# ================= CONFIG =================
 
+CSV_FILE = "/tmp/user_survey_analysis.csv"  # temp file (safe on Render)
+SCOPES = ["https://www.googleapis.com/auth/drive.file"]
+FOLDER_ID = os.environ.get("GOOGLE_DRIVE_FOLDER_ID")
+
+
+# ================= GOOGLE DRIVE =================
+
+def get_drive_service():
+    creds_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
+    creds_dict = json.loads(creds_json)
+
+    credentials = service_account.Credentials.from_service_account_info(
+        creds_dict, scopes=SCOPES
+    )
+
+    return build("drive", "v3", credentials=credentials)
+
+
+def upload_csv_to_drive(filename="user_survey_analysis.csv"):
+    service = get_drive_service()
+
+    results = service.files().list(
+        q=f"name='{filename}' and '{FOLDER_ID}' in parents and trashed=false",
+        fields="files(id, name)",
+    ).execute()
+
+    media = MediaIoBaseUpload(
+        io.FileIO(CSV_FILE, "rb"),
+        mimetype="text/csv",
+        resumable=True,
+    )
+
+    if results["files"]:
+        file_id = results["files"][0]["id"]
+        service.files().update(
+            fileId=file_id,
+            media_body=media
+        ).execute()
+    else:
+        service.files().create(
+            body={"name": filename, "parents": [FOLDER_ID]},
+            media_body=media,
+            fields="id",
+        ).execute()
+
+
+# ================= CSV GENERATION =================
 
 def export_user_row(user, evaluation):
-    os.makedirs(os.path.dirname(CSV_FILE), exist_ok=True)
-
     row = {
         "UserID": user.user_id,
         "AudioTitle": evaluation.audio.title,
@@ -27,7 +69,6 @@ def export_user_row(user, evaluation):
         "Gender": user.gender,
     }
 
-    
     questions = NoiseQuestion.objects.all().order_by("number")
     for q in questions:
         response = NoiseResponse.objects.filter(
@@ -36,7 +77,6 @@ def export_user_row(user, evaluation):
         ).first()
         row[f"Q{q.number}"] = response.rating if response else None
 
-    
     latest_eval = AudioEvaluation.objects.filter(
         user=user,
         audio=evaluation.audio
@@ -62,10 +102,12 @@ def export_user_row(user, evaluation):
     try:
         df = pd.read_csv(CSV_FILE)
 
-        # Remove old row for same user + same audio
+        # remove existing row for same user + same audio
         df = df[
-            ~((df["UserID"] == user.user_id) &
-              (df["AudioTitle"] == evaluation.audio.title))
+            ~(
+                (df["UserID"] == user.user_id) &
+                (df["AudioTitle"] == evaluation.audio.title)
+            )
         ]
 
         df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
@@ -74,3 +116,14 @@ def export_user_row(user, evaluation):
         df = pd.DataFrame([row])
 
     df.to_csv(CSV_FILE, index=False)
+
+
+# ================= SIGNAL =================
+
+@receiver(post_save, sender=AudioEvaluation)
+def update_csv_on_audio(sender, instance, **kwargs):
+    try:
+        export_user_row(instance.user, instance)
+        upload_csv_to_drive()
+    except Exception as e:
+        print("CSV / Drive upload failed:", e)
