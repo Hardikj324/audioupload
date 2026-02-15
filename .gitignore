@@ -1,0 +1,39 @@
+# ======================
+# Python / Django
+# ======================
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+
+# Virtual environment
+venv/
+.env/
+.env.*
+.env.local
+
+# Django
+media/
+staticfiles/
+db.sqlite3
+
+# ======================
+# Secrets / Credentials
+# ======================
+*.json
+credentials.json
+service_account.json
+
+# ======================
+# CSV / Generated files
+# ======================
+*.csv
+/tmp/
+
+# ======================
+# OS junk
+# ======================
+.DS_Store
+Thumbs.db
+
+
