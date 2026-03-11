@@ -22,8 +22,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cloudinary_storage',       # ← ADD (must be before staticfiles)
-    'cloudinary',               # ← ADD
+    'cloudinary_storage',
+    'cloudinary',
     'survey.apps.SurveyConfig',
     'corsheaders',
     'rest_framework',
@@ -32,6 +32,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ← FIXES ADMIN CSS
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -80,22 +81,21 @@ USE_I18N = True
 USE_TZ = True
 TIME_ZONE = 'Asia/Kolkata'
 
-STATIC_URL = 'static/'
+# ─── STATIC FILES ─────────────────────────────────────────────────────────────
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# ──────────────────────────────────────────────────────────────────────────────
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ─── CLOUDINARY CONFIG ────────────────────────────────────────────────────────
-# These values come from your Cloudinary dashboard → Settings → API Keys
-# Set them as Environment Variables on Render (never hardcode secrets!)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
     'API_KEY':    os.environ.get('CLOUDINARY_API_KEY'),
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
-
-# Tell Django to use Cloudinary for ALL uploaded media files
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# Keep MEDIA_URL (used internally by Django, Cloudinary overrides actual storage)
 MEDIA_URL = '/media/'
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -124,6 +124,3 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [],
 }
-
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
