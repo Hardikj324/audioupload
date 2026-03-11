@@ -6,7 +6,8 @@ from .views import (
     NoiseQuestionViewSet,
     NoiseResponseViewSet,
     AudioEvaluationViewSet,
-    AudioStreamView
+    AudioStreamView,
+    health_check,
     
 )
 
@@ -19,5 +20,6 @@ router.register(r'evaluations', AudioEvaluationViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('stream-audio/<int:audio_id>/', AudioStreamView.as_view(), name='stream-audio'),  
+    path('stream-audio/<int:audio_id>/', AudioStreamView.as_view(), name='stream-audio'),
+    path('health/', health_check),  
 ]

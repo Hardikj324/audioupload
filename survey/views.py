@@ -12,7 +12,10 @@ from rest_framework.response import Response
 from django.http import HttpResponse, Http404
 from django.views import View
 from django.shortcuts import redirect
+from django.http import JsonResponse
 
+def health_check(request):
+    return JsonResponse({"status": "ok"})
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
