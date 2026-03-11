@@ -19,20 +19,12 @@ class AudioSerializer(serializers.ModelSerializer):
     def get_file(self, obj):
         if not obj.file:
             return None
-        
-        url = obj.file.url
-        
-        # Force Cloudinary to serve WAV with correct headers
-        if 'cloudinary.com' in url:
-            url = url.replace('/upload/', '/upload/f_wav/')
-    
-        return url
-    
+        return obj.file.url
+
     def get_stream_url(self, obj):
         request = self.context.get("request")
         if request:
             return request.build_absolute_uri(f"/api/stream-audio/{obj.id}/")
-
         return f"/api/stream-audio/{obj.id}/"
 
 

@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
-
+from cloudinary.models import CloudinaryField 
 class UserProfile(models.Model):
     GENDER_CHOICES = [
         ('male', 'Male'),
@@ -14,7 +14,7 @@ class UserProfile(models.Model):
 
 class Audio(models.Model):
     title = models.CharField(max_length=100)
-    file = models.FileField(upload_to='audios/')
+    file = CloudinaryField(resource_type='video')
 
 class NoiseQuestion(models.Model):
     number = models.IntegerField()
