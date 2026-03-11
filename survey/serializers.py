@@ -17,14 +17,16 @@ class AudioSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def get_file(self, obj):
-        # Keep original for backwards compatibility
         if not obj.file:
             return None
-        request = self.context.get("request")
-        if request:
-            return request.build_absolute_uri(obj.file.url)
-
-        return obj.file.url
+        
+        url = obj.file.url
+        
+        # Force Cloudinary to serve WAV with correct headers
+        if 'cloudinary.com' in url:
+            url = url.replace('/upload/', '/upload/f_wav/')
+    
+        return url
     
     def get_stream_url(self, obj):
         request = self.context.get("request")
